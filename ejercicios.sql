@@ -1,4 +1,4 @@
-	-- 0. Realizar un analisis exploratorio de datos
+-- 0. Realizar un analisis exploratorio de datos
 
 
 
