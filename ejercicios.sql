@@ -2,7 +2,7 @@
 
 
 
--- 1. Encontrar cultivos cuyo promedio de precios haya sido superior a un valor específico en el último año:
+-- 1. Encontrar cultivos cuyo promedio de precios haya sido superior a un dolar en el 2023:
 
 
 -- 2. Listar las fincas que han tenido más de 10 lotes cultivados:
