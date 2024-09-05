@@ -1,5 +1,53 @@
 -- 0. Realizar un analisis exploratorio de datos
 
+select * from cultivo_extendido.m_cultivo mc
+
+select 
+f.nombre as finca,
+l.nombre as lote,
+c.nombre as cultivo
+from finca f
+	join lote l 
+		on l.id_finca = f.id
+	join m_cultivo c
+		on l.id_cultivo = c.id 
+order by finca asc, lote asc
+	
+
+select 
+c.nombre as cultivo,
+p.fecha,
+p.valor 
+from m_cultivo c
+	join precio p
+		on p.id_cultivo = c.id
+order by cultivo, fecha
+
+select count(*) from despacho d
+
+select count(*) from recogida r
+
+
+select distinct
+c.nombre as cliente,
+count(f.id)
+from factura f
+	join despacho d
+		on d.id_factura = f.id
+	join cliente c
+		on d.id_cliente = c.id
+group by c.nombre
+
+
+select 
+u.nombre,
+count(r.id),
+sum(r.cantidad)
+from usuario u
+	join recogida r
+		on r.id_usuario = u.id
+group by u.nombre
+-- 1. Encontrar cult
 
 	
 -- 1. Encontrar cultivos cuyo promedio de precios haya sido superior a un dolar en el 2023:
