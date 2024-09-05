@@ -106,8 +106,22 @@ having sum(r.cantidad) > 8000000
 
 -- 5. Calcular los lotes que tuvieron un ingreso proyectado mayor a 100 millones en el 2023. 
 -- El ingreso proyectado se calcula como el precio multiplicado por la cantidad de producto recogido.
-
-
+select 
+f.nombre, 
+l.nombre,
+sum(r.cantidad  * p.valor)
+from lote l
+	join finca f
+		on l.id_finca = f.id
+	join recogida r
+		on r.id_lote = l.id
+	join m_cultivo c
+		on l.id_cultivo  = c.id
+	join precio p
+		on p.id_cultivo = c.id
+where extract(year from r.fecha) = 2023
+group by f.nombre, l.nombre
+having sum(r.cantidad  * p.valor) > 100000000
 
 -- 6. Listar todas las fincas que han bajaron su producción en más de 20% entre el 2022 y el 2023
 
