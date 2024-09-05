@@ -93,7 +93,16 @@ group by u.nombre
 having sum(r.cantidad)>1000
 
 -- 4. Determinar los meses en los cuales la cantidad despachada superó 8000000 de unidades:
-
+select 
+extract(year from d.fecha) as año, 
+extract(month from d.fecha) as mes,
+sum(r.cantidad) as total
+from despacho d
+	join recogida r
+		on r.id_despacho = d.id
+group by extract(year from d.fecha), 
+extract(month from d.fecha)
+having sum(r.cantidad) > 8000000
 
 -- 5. Calcular los lotes que tuvieron un ingreso proyectado mayor a 100 millones en el 2023. 
 -- El ingreso proyectado se calcula como el precio multiplicado por la cantidad de producto recogido.
