@@ -47,11 +47,29 @@ from usuario u
 	join recogida r
 		on r.id_usuario = u.id
 group by u.nombre
--- 1. Encontrar cult
 
-	
+-- lista de comandos en SQL
+
+-- select
+-- from
+-- join
+-- where
+-- group by -> sum, avg, count, max, min
+-- having
+-- order by 
+-- limit
+
 -- 1. Encontrar cultivos cuyo promedio de precios haya sido superior a un dolar en el 2023:
-
+select
+c.nombre,
+avg(p.valor)
+from m_cultivo c
+	join precio p
+		on p.id_cultivo = c.id
+where 
+extract(year from p.fecha) = 2023
+group by c.nombre
+having avg(p.valor) > 1
 
 
 -- 2. Listar las fincas que han tenido más de 10 lotes cultivados:
