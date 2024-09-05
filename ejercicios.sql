@@ -73,7 +73,14 @@ having avg(p.valor) > 1
 
 
 -- 2. Listar las fincas que han tenido más de 10 lotes cultivados:
-
+select
+f.nombre,
+count(l.id)
+from finca f
+	join lote l
+		on l.id_finca = f.id
+group by f.nombre
+having count(l.id)>10
 
 -- 3. Identificar los usuarios que han recogido más de 1000 unidades en total:
 
