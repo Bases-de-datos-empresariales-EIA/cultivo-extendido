@@ -83,7 +83,14 @@ group by f.nombre
 having count(l.id)>10
 
 -- 3. Identificar los usuarios que han recogido más de 1000 unidades en total:
-
+select
+u.nombre,
+sum(r.cantidad)
+from usuario u
+	join recogida r
+		on r.id_usuario = u.id
+group by u.nombre 
+having sum(r.cantidad)>1000
 
 -- 4. Determinar los meses en los cuales la cantidad despachada superó 8000000 de unidades:
 
