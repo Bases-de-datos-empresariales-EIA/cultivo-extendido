@@ -1,85 +1,23 @@
 -- 0. Realizar un analisis exploratorio de datos
 
-select * from cultivo_extendido.m_cultivo mc 
 
-select * from cultivo_extendido.finca f 
-
-select 
-f.nombre,
-l.nombre 
-from cultivo_extendido.finca f 
-	join cultivo_extendido.lote l 
-		on l.id_finca  = f.id
-order by f.nombre asc, l.nombre asc
-
-select * from m_cultivo c
-	join precio p 
-		on p.id_cultivo  = c.id
-
-select count(*) from recogida r 
-
-select count(*) from despacho d
 	
 -- 1. Encontrar cultivos cuyo promedio de precios haya sido superior a un dolar en el 2023:
 
-select 
-c.nombre,
-avg(p.valor)
-from m_cultivo c
-	join precio p 
-		on p.id_cultivo = c.id
-where extract( year from p.fecha ) = 2023
-group by c.nombre 
-having avg(p.valor)>1
+
 
 -- 2. Listar las fincas que han tenido más de 10 lotes cultivados:
-select 
-f.nombre,
-count(l.id)
-from finca f
-	join lote l
-		on l.id_finca  = f.id
-group by f.nombre
-having count(l.id) > 10
+
 
 -- 3. Identificar los usuarios que han recogido más de 1000 unidades en total:
-select
-u.nombre,
-sum(r.cantidad)
-from recogida r
-	join usuario u
-		on r.id_usuario = u.id
-group by u.nombre
-having sum(r.cantidad) > 1000
+
 
 -- 4. Determinar los meses en los cuales la cantidad despachada superó 8000000 de unidades:
-select 
-extract(year from d.fecha), 
-extract(month from d.fecha),
-sum(r.cantidad)
-from despacho d 
-	join recogida r
-		on r.id_despacho = d.id
-group by extract(year from d.fecha), extract(month from d.fecha)
-having sum(r.cantidad)>8000000
+
 
 -- 5. Calcular los lotes que tuvieron un ingreso proyectado mayor a 100 millones en el 2023. 
 -- El ingreso proyectado se calcula como el precio multiplicado por la cantidad de producto recogido.
-select 
-f.nombre,
-l.nombre,
-sum(r.cantidad * p.valor) as ingreso_proyectado
-from recogida r
-	join lote l 
-		on r.id_lote = l.id
-	join finca f
-		on l.id_finca = f.id
-	join m_cultivo c
-		on l.id_cultivo = c.id
-	join precio p
-		on p.id_cultivo = c.id
-group by f.nombre, l.nombre 
-having sum(r.cantidad * p.valor) > 100000000
+
 
 
 -- 6. Listar todas las fincas que han bajaron su producción en más de 20% entre el 2022 y el 2023
