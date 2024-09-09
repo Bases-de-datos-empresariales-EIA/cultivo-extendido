@@ -124,6 +124,8 @@ group by f.nombre, l.nombre
 having sum(r.cantidad  * p.valor) > 100000000
 
 -- 6. Listar todas las fincas que han bajado su producción en más de 20% entre el 2022 y el 2023
+
+-- metodo 1: common table expressions (CTE)
 with resultado_2022 as (
 select
 f.nombre as finca,
@@ -146,6 +148,38 @@ from recogida r
 		on l.id_finca = f.id
 where extract(year from r.fecha) = 2023
 group by f.nombre 
+)
+select 
+r22.finca,
+r22.total as resultado_2022,
+r23.total as resultado_2023,
+(r23.total - r22.total) * 100 / r22.total as cambio
+from resultado_2022 as r22
+	join resultado_2023 as r23
+		on r22.finca = r23.finca
+where (r23.total - r22.total) * 100 / r22.total < -20
+
+
+-- metodo 2: con vistas
+create view produccion_anual as
+select
+extract(year from r.fecha) as año,
+f.nombre as finca,
+sum(r.cantidad) as total
+from recogida r
+	join lote l	
+		on r.id_lote = l.id
+	join finca f 
+		on l.id_finca = f.id
+group by f.nombre, extract(year from r.fecha)
+order by año, finca;
+
+with resultado_2022 as (
+	select * from produccion_anual pa
+	where pa.año = 2022
+), resultado_2023 as (
+	select * from produccion_anual pa
+	where pa.año = 2023
 )
 select 
 r22.finca,
