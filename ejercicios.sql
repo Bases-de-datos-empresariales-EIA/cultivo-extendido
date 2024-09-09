@@ -303,6 +303,33 @@ from facturacion_2022 as f22
 -- El siguiente paso es calcular la diferencia entre los dos totales para cada mes, 
 -- lo que te dará el incremento o decremento en la facturación mes a mes.
 
+create view depachos_mensuales as
+select
+extract(year from d.fecha) as año,
+extract(month from d.fecha) as mes,
+count(d.id) as cantidad_despachos
+from despacho d
+group by extract(year from d.fecha),extract(month from d.fecha)
+
+
+with despachos_22 as (
+select * from depachos_mensuales
+where año = 2022
+),
+despachos_23 as (
+select * from depachos_mensuales
+where año = 2023
+)
+select 
+d22.mes,
+d22.cantidad_despachos,
+d23.cantidad_despachos,
+(d22.cantidad_despachos - coalesce(d23.cantidad_despachos, 0)) as diferencia
+from despachos_22 as d22
+	left join despachos_23 as d23
+		on d22.mes = d23.mes
+
+
 
 -- 10. Calcular el aumento porcentual anual en el total de recogidas por cultivo entre dos años consecutivos, 
 -- comparando específicamente las cantidades recolectadas en 2022 y 2023.
