@@ -201,6 +201,35 @@ where (r23.total - r22.total) * 100 / r22.total < -20
 -- los lotes cuyo promedio supera el general. Este proceso puede ser facilitado utilizando
 -- subconsultas o una CTE para mantener el promedio general 
 -- accesible durante la comparación
+with promedio_general as (
+	select 
+	c.nombre as cultivo,
+	avg(r.cantidad) as promedio
+	from m_cultivo c 
+		join lote l 
+			on l.id_cultivo = c.id
+		join recogida r 
+			on r.id_lote = l.id
+	group by c.nombre 
+), promedio_por_lote as (
+	select 
+	c.nombre as cultivo,
+	f.nombre as finca,
+	l.nombre as lote,
+	avg(r.cantidad) as promedio
+	from m_cultivo c 
+		join lote l 
+			on l.id_cultivo = c.id
+		join recogida r 
+			on r.id_lote = l.id
+		join finca f
+			on l.id_finca = f.id
+	group by c.nombre, f.nombre, l.nombre
+)
+select * from promedio_general as pg
+	join promedio_por_lote pl
+		on pg.cultivo = pl.cultivo
+where pl.promedio > pg.promedio
 
 
 -- 8. Calcular el incremento en facturación por cada mes entre el 2022 y el 2023.
