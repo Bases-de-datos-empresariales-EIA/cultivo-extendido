@@ -123,7 +123,7 @@ where extract(year from r.fecha) = 2023
 group by f.nombre, l.nombre
 having sum(r.cantidad  * p.valor) > 100000000
 
--- 6. Listar todas las fincas que han bajaron su producción en más de 20% entre el 2022 y el 2023
+-- 6. Listar todas las fincas que han bajado su producción en más de 20% entre el 2022 y el 2023
 
 
 -- 7. Obtener el promedio de recolecciones por lote y listar aquellos lotes que superan el 
