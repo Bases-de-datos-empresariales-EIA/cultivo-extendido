@@ -266,6 +266,33 @@ from facturacion_mensual_2022 as f22
 	left join facturacion_mensual_2023 as f23
 		on f22.mes = f23.mes
 
+
+-- crear vista de facturacion_mensual
+create view facturacion_mensual as 
+select
+extract(year from f.fecha) as año,
+extract(month from f.fecha) as mes,
+sum(f.total) as total
+from factura f
+group by extract(year from f.fecha), extract (month from f.fecha)
+order by año, mes;
+
+with facturacion_2022 as (
+select * from facturacion_mensual
+where año = 2022
+), facturacion_2023 as (
+select * from facturacion_mensual
+where año = 2023
+)
+select 
+f22.mes,
+f22.total as total_2022,
+coalesce(f23.total,0) as total_2023,
+f22.total - coalesce(f23.total,0) as diferencia
+from facturacion_2022 as f22
+	left join facturacion_2023 as f23
+		on f22.mes = f23.mes
+
 -- 9. Calcular el incremento en cantidad de despachos por cada mes entre el 2022 y el 2023.
 -- Para calcular el incremento en cantidad de despachos por cada mes entre los años 2022 y 2023 
 -- utilizando Common Table Expressions (CTEs), primero debes estructurar dos CTEs separadas, 
