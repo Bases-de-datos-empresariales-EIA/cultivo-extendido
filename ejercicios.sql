@@ -242,6 +242,30 @@ where pl.promedio > pg.promedio
 -- El siguiente paso es calcular la diferencia entre los dos totales para cada mes, 
 -- lo que te dará el incremento o decremento en la facturación mes a mes.
 
+with facturacion_mensual_2022 as (
+select
+extract(month from f.fecha) as mes,
+sum(f.total) as total
+from factura f
+where extract(year from f.fecha) = 2022
+group by extract (month from f.fecha)
+), facturacion_mensual_2023 as (
+select
+extract(month from f.fecha) as mes,
+sum(f.total) as total
+from factura f
+where extract(year from f.fecha) = 2023
+group by extract (month from f.fecha)
+)
+select 
+f22.mes,
+f22.total,
+coalesce(f23.total,0),
+f22.total - coalesce(f23.total,0) as diferencia
+from facturacion_mensual_2022 as f22
+	left join facturacion_mensual_2023 as f23
+		on f22.mes = f23.mes
+
 -- 9. Calcular el incremento en cantidad de despachos por cada mes entre el 2022 y el 2023.
 -- Para calcular el incremento en cantidad de despachos por cada mes entre los años 2022 y 2023 
 -- utilizando Common Table Expressions (CTEs), primero debes estructurar dos CTEs separadas, 
