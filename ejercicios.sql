@@ -205,6 +205,59 @@ where (p23.total - p22.total) * 100 / p22.total < -20
 -- subconsultas o una CTE para mantener el promedio general 
 -- accesible durante la comparación
 
+create view promedio_general_cultivo as
+select
+c.nombre as cultivo,
+avg(r.cantidad)
+from m_cultivo as c
+	join lote l
+		on l.id_cultivo  = c.id
+	join recogida r 
+		on r.id_lote = l.id
+group by c.nombre
+
+create view promedio_lote as
+select 
+f.nombre as finca,
+l.nombre as lote,
+avg(r.cantidad)
+from lote l
+	join recogida r
+		on r.id_lote = l.id
+	join finca f 
+		on l.id_finca = f.id
+group by f.nombre, l.nombre
+
+
+
+select * from promedio_general_cultivo
+
+select * from promedio_lote
+
+with cultivo_finca_lote as (
+	select
+	c.nombre as cultivo,
+	f.nombre  as finca,
+	l.nombre as lote
+	from lote l
+		join m_cultivo c
+			on l.id_cultivo = c.id
+		join finca f 
+			on l.id_finca = f.id
+	)
+select
+cfl.cultivo,
+cfl.finca,
+cfl.lote,
+pgc.avg as prom_general,
+pl.avg as prom_lote,
+pgc.avg - pl.avg as diferencia
+from cultivo_finca_lote as cfl
+	join promedio_general_cultivo as pgc
+		on cfl.cultivo = pgc.cultivo
+	join promedio_lote as pl
+		on cfl.finca = pl.finca and cfl.lote = pl.lote
+where pgc.avg - pl.avg < 0
 
 -- 8. Calcular el incremento en facturación por cada mes entre el 2022 y el 2023.
 -- Para calcular el incremento en facturación por cada mes entre los años 2022 y 2023 
