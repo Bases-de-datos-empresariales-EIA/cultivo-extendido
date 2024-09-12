@@ -125,6 +125,8 @@ having sum(r.cantidad  * p.valor) > 100000000
 
 -- 6. Listar todas las fincas que han bajado su producción en más de 20% entre el 2022 y el 2023
 
+
+-- opcion 1: query en el CTE
 with produccion_2022 as (
 	select
 	f.nombre as finca,
@@ -155,7 +157,41 @@ p22.finca,
 from produccion_2022 as p22
 	join produccion_2023 as p23
 		on p22.finca = p23.finca
-where (p23.total - p22.total) * 100 / p22.total < -20a
+where (p23.total - p22.total) * 100 / p22.total < -20
+
+
+-- metodo 2: usando vistas y CTE
+create view produccion_anual as
+select
+f.nombre as finca,
+extract(year from r.fecha) as año,
+sum(r.cantidad) as total
+from finca f
+	join lote l
+		on l.id_finca  = f.id
+	join recogida r 
+		on r.id_lote = l.id
+group by f.nombre, extract(year from r.fecha)
+order by finca, año
+
+
+with produccion_2022 as (
+	select * from produccion_anual pa 
+	where año = 2022
+),
+produccion_2023 as (
+	select * from produccion_anual pa 
+	where año = 2023
+)
+select 
+p22.finca,
+(p23.total - p22.total) * 100 / p22.total as cambio_porcentual
+from produccion_2022 as p22
+	join produccion_2023 as p23
+		on p22.finca = p23.finca
+where (p23.total - p22.total) * 100 / p22.total < -20
+
+
 
 
 -- 7. Obtener el promedio de recolecciones por lote y listar aquellos lotes que superan el 
