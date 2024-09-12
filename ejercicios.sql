@@ -125,71 +125,38 @@ having sum(r.cantidad  * p.valor) > 100000000
 
 -- 6. Listar todas las fincas que han bajado su producción en más de 20% entre el 2022 y el 2023
 
--- metodo 1: common table expressions (CTE)
-with resultado_2022 as (
-select
-f.nombre as finca,
-sum(r.cantidad) as total
-from recogida r 
-	join lote l	
-		on r.id_lote = l.id
-	join finca f 
-		on l.id_finca = f.id
-where extract(year from r.fecha) = 2022
-group by f.nombre 
-), resultado_2023 as (
-select
-f.nombre as finca,
-sum(r.cantidad) as total
-from recogida r
-	join lote l	
-		on r.id_lote = l.id
-	join finca f 
-		on l.id_finca = f.id
-where extract(year from r.fecha) = 2023
-group by f.nombre 
+with produccion_2022 as (
+	select
+	f.nombre as finca,
+	sum(r.cantidad) as total
+	from finca f
+		join lote l
+			on l.id_finca  = f.id
+		join recogida r 
+			on r.id_lote = l.id
+	where extract(year from r.fecha) = 2022
+	group by f.nombre
+),
+produccion_2023 as (
+	select
+	f.nombre as finca,
+	sum(r.cantidad) as total
+	from finca f
+		join lote l
+			on l.id_finca  = f.id
+		join recogida r 
+			on r.id_lote = l.id
+	where extract(year from r.fecha) = 2023
+	group by f.nombre
 )
 select 
-r22.finca,
-r22.total as resultado_2022,
-r23.total as resultado_2023,
-(r23.total - r22.total) * 100 / r22.total as cambio
-from resultado_2022 as r22
-	join resultado_2023 as r23
-		on r22.finca = r23.finca
-where (r23.total - r22.total) * 100 / r22.total < -20
+p22.finca,
+(p23.total - p22.total) * 100 / p22.total as cambio_porcentual
+from produccion_2022 as p22
+	join produccion_2023 as p23
+		on p22.finca = p23.finca
+where (p23.total - p22.total) * 100 / p22.total < -20a
 
-
--- metodo 2: con vistas
-create view produccion_anual as
-select
-extract(year from r.fecha) as año,
-f.nombre as finca,
-sum(r.cantidad) as total
-from recogida r
-	join lote l	
-		on r.id_lote = l.id
-	join finca f 
-		on l.id_finca = f.id
-group by f.nombre, extract(year from r.fecha)
-order by año, finca;
-
-with resultado_2022 as (
-	select * from produccion_anual pa
-	where pa.año = 2022
-), resultado_2023 as (
-	select * from produccion_anual pa
-	where pa.año = 2023
-)
-select 
-r22.finca,
-r22.total as resultado_2022,
-r23.total as resultado_2023,
-(r23.total - r22.total) * 100 / r22.total as cambio
-from resultado_2022 as r22
-	join resultado_2023 as r23
-		on r22.finca = r23.finca
-where (r23.total - r22.total) * 100 / r22.total < -20
 
 -- 7. Obtener el promedio de recolecciones por lote y listar aquellos lotes que superan el 
 -- promedio general del cultivo de ese lote
@@ -201,35 +168,6 @@ where (r23.total - r22.total) * 100 / r22.total < -20
 -- los lotes cuyo promedio supera el general. Este proceso puede ser facilitado utilizando
 -- subconsultas o una CTE para mantener el promedio general 
 -- accesible durante la comparación
-with promedio_general as (
-	select 
-	c.nombre as cultivo,
-	avg(r.cantidad) as promedio
-	from m_cultivo c 
-		join lote l 
-			on l.id_cultivo = c.id
-		join recogida r 
-			on r.id_lote = l.id
-	group by c.nombre 
-), promedio_por_lote as (
-	select 
-	c.nombre as cultivo,
-	f.nombre as finca,
-	l.nombre as lote,
-	avg(r.cantidad) as promedio
-	from m_cultivo c 
-		join lote l 
-			on l.id_cultivo = c.id
-		join recogida r 
-			on r.id_lote = l.id
-		join finca f
-			on l.id_finca = f.id
-	group by c.nombre, f.nombre, l.nombre
-)
-select * from promedio_general as pg
-	join promedio_por_lote pl
-		on pg.cultivo = pl.cultivo
-where pl.promedio > pg.promedio
 
 
 -- 8. Calcular el incremento en facturación por cada mes entre el 2022 y el 2023.
@@ -242,56 +180,11 @@ where pl.promedio > pg.promedio
 -- El siguiente paso es calcular la diferencia entre los dos totales para cada mes, 
 -- lo que te dará el incremento o decremento en la facturación mes a mes.
 
-with facturacion_mensual_2022 as (
-select
-extract(month from f.fecha) as mes,
-sum(f.total) as total
-from factura f
-where extract(year from f.fecha) = 2022
-group by extract (month from f.fecha)
-), facturacion_mensual_2023 as (
-select
-extract(month from f.fecha) as mes,
-sum(f.total) as total
-from factura f
-where extract(year from f.fecha) = 2023
-group by extract (month from f.fecha)
-)
-select 
-f22.mes,
-f22.total,
-coalesce(f23.total,0),
-f22.total - coalesce(f23.total,0) as diferencia
-from facturacion_mensual_2022 as f22
-	left join facturacion_mensual_2023 as f23
-		on f22.mes = f23.mes
+
 
 
 -- crear vista de facturacion_mensual
-create view facturacion_mensual as 
-select
-extract(year from f.fecha) as año,
-extract(month from f.fecha) as mes,
-sum(f.total) as total
-from factura f
-group by extract(year from f.fecha), extract (month from f.fecha)
-order by año, mes;
 
-with facturacion_2022 as (
-select * from facturacion_mensual
-where año = 2022
-), facturacion_2023 as (
-select * from facturacion_mensual
-where año = 2023
-)
-select 
-f22.mes,
-f22.total as total_2022,
-coalesce(f23.total,0) as total_2023,
-f22.total - coalesce(f23.total,0) as diferencia
-from facturacion_2022 as f22
-	left join facturacion_2023 as f23
-		on f22.mes = f23.mes
 
 -- 9. Calcular el incremento en cantidad de despachos por cada mes entre el 2022 y el 2023.
 -- Para calcular el incremento en cantidad de despachos por cada mes entre los años 2022 y 2023 
@@ -303,31 +196,7 @@ from facturacion_2022 as f22
 -- El siguiente paso es calcular la diferencia entre los dos totales para cada mes, 
 -- lo que te dará el incremento o decremento en la facturación mes a mes.
 
-create view depachos_mensuales as
-select
-extract(year from d.fecha) as año,
-extract(month from d.fecha) as mes,
-count(d.id) as cantidad_despachos
-from despacho d
-group by extract(year from d.fecha),extract(month from d.fecha)
 
-
-with despachos_22 as (
-select * from depachos_mensuales
-where año = 2022
-),
-despachos_23 as (
-select * from depachos_mensuales
-where año = 2023
-)
-select 
-d22.mes,
-d22.cantidad_despachos,
-d23.cantidad_despachos,
-(d22.cantidad_despachos - coalesce(d23.cantidad_despachos, 0)) as diferencia
-from despachos_22 as d22
-	left join despachos_23 as d23
-		on d22.mes = d23.mes
 
 
 
