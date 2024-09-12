@@ -269,10 +269,34 @@ where pgc.avg - pl.avg < 0
 -- El siguiente paso es calcular la diferencia entre los dos totales para cada mes, 
 -- lo que te dará el incremento o decremento en la facturación mes a mes.
 
-
-
-
 -- crear vista de facturacion_mensual
+create view facturacion_mensual as
+select
+extract(year from f.fecha) as año,
+extract (month from f.fecha) as mes,
+sum(f.total)
+from factura f
+group by extract(year from f.fecha), extract(month from f.fecha)
+
+select * from facturacion_mensual
+
+with facturacion_22 as (
+	select * from facturacion_mensual
+	where año = 2022
+),
+facturacion_23 as (
+	select * from facturacion_mensual
+	where año = 2023
+)
+select 
+f22.mes,
+f22.sum,
+coalesce(f23.sum,0),
+f22.sum - coalesce(f23.sum,0) as diferencia
+from facturacion_22 as f22
+	left join facturacion_23 as f23
+		on f22.mes = f23.mes
+
 
 
 -- 9. Calcular el incremento en cantidad de despachos por cada mes entre el 2022 y el 2023.
