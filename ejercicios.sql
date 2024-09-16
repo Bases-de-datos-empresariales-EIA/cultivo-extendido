@@ -478,3 +478,26 @@ select * from ranking where rango <= 3
 
 
 -- 15. Obtener la cantidad de recogida de cada lote y su posición relativa dentro de la finca
+with total_lote as (
+	select 
+	f.nombre as finca,
+	l.nombre as lote,
+	sum(r.cantidad) as total
+	from lote l
+		join recogida r
+			on r.id_lote = l.id
+		join finca f 
+			on l.id_finca = f.id
+	group by f.nombre, l.nombre 
+),
+ranking as (
+	select 
+	t.finca,
+	t.lote,
+	t.total,
+	row_number() over (partition by t.finca order by t.total desc) as rango
+	from total_lote t
+)
+select * from ranking where rango <= 3
+
+
