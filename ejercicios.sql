@@ -335,21 +335,87 @@ coalesce(d23.cantidad_despachos,0) - d22.cantidad_despachos as diferencia
 from despachos_22 as d22
 	left join despachos_23 as d23
 		on d22.mes = d23.mes
+	
 		
-
 -- 10. Calcular el aumento porcentual anual en el total de recogidas por cultivo entre dos años consecutivos, 
 -- comparando específicamente las cantidades recolectadas en 2022 y 2023.
 
+		
+-- 
+with total_cultivo_22 as (
+	select 
+	c.nombre,
+	sum(r.cantidad) as total
+	from recogida r
+		join lote l 
+			on r.id_lote = l.id
+		join finca f 
+			on l.id_finca = f.id
+		join m_cultivo c
+			on l.id_cultivo = c.id
+	where extract(year from r.fecha) = 2022
+	group by c.nombre
+),
+total_cultivo_23 as (
+	select 
+	c.nombre,
+	sum(r.cantidad) as total
+	from recogida r
+		join lote l 
+			on r.id_lote = l.id
+		join finca f 
+			on l.id_finca = f.id
+		join m_cultivo c
+			on l.id_cultivo = c.id
+	where extract(year from r.fecha) = 2023
+	group by c.nombre
+)
+select 
+c22.nombre,
+(c23.total - c22.total) * 100 / c22.total as diferencia
+from total_cultivo_22 as c22
+	join total_cultivo_23 as c23
+		on c22.nombre = c23.nombre
 
--- 11. Comparar la eficiencia de las fincas en términos de ingreso por hectárea. 
+-- usando vistas
+create view total_cultivado_año as
+select 
+c.nombre,
+extract(year from r.fecha) as año,
+sum(r.cantidad) as total
+from recogida r
+	join lote l 
+		on r.id_lote = l.id
+	join finca f 
+		on l.id_finca = f.id
+	join m_cultivo c
+		on l.id_cultivo = c.id
+group by extract(year from r.fecha), c.nombre
 
--- El ingreso se calcula como la cantidad recogida multiplicado por el precio del cultivo en el mes que se dio la recogida.
--- El tamaño de la finca se puede calcular asumiendo que cada lote mide 4 hectáreas.
--- Para realizar un análisis detallado de la eficiencia de las fincas en términos de ingreso por hectárea, comienza creando una vista que 
--- determine el tamaño total de cada finca sumando el número de lotes y multiplicando por 4, ya que cada lote tiene 4 hectáreas. 
--- Posteriormente, desarrolla una vista para capturar los precios mensuales de cada cultivo, asegurando que los ingresos se calculen 
--- utilizando el precio correspondiente al mes de cada recogida. Utiliza esta vista de precios en una tercera vista que calcula el ingreso 
--- por lote, multiplicando la cantidad recolectada en cada recogida por el precio del cultivo en el mes correspondiente. Realiza un join entre la 
--- vista del tamaño de las fincas y la vista de ingresos por lote para combinar el tamaño de cada finca con los ingresos obtenidos de sus lotes, 
--- sumando los ingresos de todos los lotes que pertenecen a cada finca. Finalmente, calcula el indicador de ingreso por hectárea dividiendo el total de 
--- ingresos de cada finca por su tamaño total en hectáreas.
+
+with total_22 as (
+	select * from total_cultivado_año
+	where año = 2022
+),
+total_23 as (
+	select * from total_cultivado_año
+	where año = 2023
+)
+select
+t22.nombre,
+(t23.total - t22.total) * 100 / t22.total as diferencia
+from total_22 t22
+	join total_23 t23
+		on t22.nombre = t23.nombre
+
+
+-- 11. calcular las 3 recogidas mas grandes de cada lote
+		
+		
+-- 12. Porcentaje de la contribución de cada recogida al total anual por cultivo
+		
+-- 13. Calcular el porcentaje de contribución de cada finca a la producción total por año
+		
+-- 14. Obtener el puesto de cada usuario según la cantidad total de recogida que ha realizado
+		
+-- 15. Obtener la cantidad de recogida de cada lote y su posición relativa dentro de la finca
