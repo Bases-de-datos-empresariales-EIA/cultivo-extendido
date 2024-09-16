@@ -446,7 +446,35 @@ from recogida r
 
 
 -- 13. Calcular el porcentaje de contribución de cada finca a la producción total por año
+select
+pa.finca,
+pa.año,
+pa.total,
+sum(pa.total) over (partition by pa.año) as total,
+pa.total * 100 / sum(pa.total) over (partition by pa.año) as contribucion
+from produccion_anual pa
 		
--- 14. Obtener el puesto de cada usuario según la cantidad total de recogida que ha realizado
 		
+-- 14. Obtener el puesto de cada usuario según la cantidad total de recogida que ha realizado en cada año
+with total_por_usuario as (
+	select
+	u.nombre,
+	extract(year from r.fecha) as año,
+	sum(r.cantidad) as total
+	from recogida r
+		join usuario u
+			on r.id_usuario = u.id
+	group by extract(year from r.fecha), u.nombre 
+),
+ranking as (
+	select 
+	tu.nombre,
+	tu.total,
+	tu.año,
+	row_number() over (partition by tu.año order by tu.total desc) rango
+	from total_por_usuario tu
+)
+select * from ranking where rango <= 3
+
+
 -- 15. Obtener la cantidad de recogida de cada lote y su posición relativa dentro de la finca
