@@ -409,11 +409,42 @@ from total_22 t22
 		on t22.nombre = t23.nombre
 
 
+		
 -- 11. calcular las 3 recogidas mas grandes de cada lote
+with ranking_maximos as (	
+select 
+f.nombre,
+l.nombre,
+r.cantidad,
+row_number() over (partition by f.nombre, l.nombre order by r.cantidad desc) as ranking
+from recogida r
+	join lote l 
+		on r.id_lote  = l.id
+	join finca f 
+		on l.id_finca = f.id
+)
+select * from ranking_maximos
+where ranking <= 3
 		
 		
 -- 12. Porcentaje de la contribución de cada recogida al total anual por cultivo
-		
+select 
+c.nombre,
+f.nombre,
+l.nombre,
+r.fecha,
+r.cantidad,
+sum(r.cantidad) over (partition by c.nombre, extract(year from r.fecha)) as total_año,
+r.cantidad * 100 / (sum(r.cantidad) over (partition by c.nombre, extract(year from r.fecha)) ) as contribucion
+from recogida r
+	join lote l
+		on r.id_lote = l.id
+	join finca f
+		on l.id_finca = f.id
+	join m_cultivo c
+		on l.id_cultivo = c.id
+
+
 -- 13. Calcular el porcentaje de contribución de cada finca a la producción total por año
 		
 -- 14. Obtener el puesto de cada usuario según la cantidad total de recogida que ha realizado
