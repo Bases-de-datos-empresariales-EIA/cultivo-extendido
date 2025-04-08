@@ -16,7 +16,7 @@
 
 8. Calcular el incremento o decremento mensual en facturación entre los años 2022 y 2023.
 
-9. Calcular el incremento o decremento mensual en la cantidad de despachos entre los años 2022 y 2023.
+9. Calcular el incremento o decremento mensual en la cantidad de fruta despachada entre los años 2022 y 2023.
 
 10. Calcular el aumento porcentual anual en la cantidad total recogida por cultivo entre los años 2022 y 2023.
 
