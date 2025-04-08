@@ -124,72 +124,39 @@ group by f.nombre, l.nombre
 having sum(r.cantidad  * p.valor) > 100000000
 
 -- 6. Listar todas las fincas que han bajado su producción en más de 20% entre el 2022 y el 2023
-
-
--- opcion 1: query en el CTE
 with produccion_2022 as (
-	select
+	select 
 	f.nombre as finca,
-	sum(r.cantidad) as total
+	sum(r.cantidad) as produccion
 	from finca f
 		join lote l
-			on l.id_finca  = f.id
-		join recogida r 
+			on l.id_finca = f.id
+		join recogida r
 			on r.id_lote = l.id
 	where extract(year from r.fecha) = 2022
 	group by f.nombre
 ),
 produccion_2023 as (
-	select
+	select 
 	f.nombre as finca,
-	sum(r.cantidad) as total
+	sum(r.cantidad) as produccion
 	from finca f
 		join lote l
-			on l.id_finca  = f.id
-		join recogida r 
+			on l.id_finca = f.id
+		join recogida r
 			on r.id_lote = l.id
 	where extract(year from r.fecha) = 2023
 	group by f.nombre
 )
 select 
 p22.finca,
-(p23.total - p22.total) * 100 / p22.total as cambio_porcentual
-from produccion_2022 as p22
-	join produccion_2023 as p23
+p22.produccion as produccion_2022,
+p23.produccion as produccion_2023,
+(p23.produccion - p22.produccion) * 100 / p22.produccion as cambio_porcentual
+from produccion_2022 p22
+	join produccion_2023 p23
 		on p22.finca = p23.finca
-where (p23.total - p22.total) * 100 / p22.total < -20
-
-
--- metodo 2: usando vistas y CTE
-create view produccion_anual as
-select
-f.nombre as finca,
-extract(year from r.fecha) as año,
-sum(r.cantidad) as total
-from finca f
-	join lote l
-		on l.id_finca  = f.id
-	join recogida r 
-		on r.id_lote = l.id
-group by f.nombre, extract(year from r.fecha)
-order by finca, año
-
-
-with produccion_2022 as (
-	select * from produccion_anual pa 
-	where año = 2022
-),
-produccion_2023 as (
-	select * from produccion_anual pa 
-	where año = 2023
-)
-select 
-p22.finca,
-(p23.total - p22.total) * 100 / p22.total as cambio_porcentual
-from produccion_2022 as p22
-	join produccion_2023 as p23
-		on p22.finca = p23.finca
-where (p23.total - p22.total) * 100 / p22.total < -20
+where (p23.produccion - p22.produccion) * 100 / p22.produccion < -20	
 
 
 
@@ -205,59 +172,40 @@ where (p23.total - p22.total) * 100 / p22.total < -20
 -- subconsultas o una CTE para mantener el promedio general 
 -- accesible durante la comparación
 
-create view promedio_general_cultivo as
-select
-c.nombre as cultivo,
-avg(r.cantidad)
-from m_cultivo as c
-	join lote l
-		on l.id_cultivo  = c.id
-	join recogida r 
-		on r.id_lote = l.id
-group by c.nombre
-
-create view promedio_lote as
-select 
-f.nombre as finca,
-l.nombre as lote,
-avg(r.cantidad)
-from lote l
-	join recogida r
-		on r.id_lote = l.id
-	join finca f 
-		on l.id_finca = f.id
-group by f.nombre, l.nombre
-
-
-
-select * from promedio_general_cultivo
-
-select * from promedio_lote
-
-with cultivo_finca_lote as (
-	select
+with promedio_general_cultivo as (
+	select 
+	c.id as id_cultivo,
 	c.nombre as cultivo,
-	f.nombre  as finca,
-	l.nombre as lote
-	from lote l
+	avg(r.cantidad) as promedio_cultivo
+	from finca f
+		join lote l
+			on l.id_finca = f.id
 		join m_cultivo c
 			on l.id_cultivo = c.id
-		join finca f 
+		join recogida r
+			on r.id_lote = l.id
+	group by c.id, c.nombre
+),
+promedio_por_lote as (
+	select 
+	f.nombre as finca,
+	c.id as id_cultivo,
+	l.nombre as lote,
+	avg(r.cantidad) as promedio_lote
+	from finca f
+		join lote l
 			on l.id_finca = f.id
-	)
-select
-cfl.cultivo,
-cfl.finca,
-cfl.lote,
-pgc.avg as prom_general,
-pl.avg as prom_lote,
-pgc.avg - pl.avg as diferencia
-from cultivo_finca_lote as cfl
-	join promedio_general_cultivo as pgc
-		on cfl.cultivo = pgc.cultivo
-	join promedio_lote as pl
-		on cfl.finca = pl.finca and cfl.lote = pl.lote
-where pgc.avg - pl.avg < 0
+		join m_cultivo c
+			on l.id_cultivo = c.id
+		join recogida r
+			on r.id_lote = l.id
+	group by c.id,c.nombre, l.id, f.nombre, l.nombre
+)
+select * from promedio_por_lote pl
+	join promedio_general_cultivo pgc
+		on pl.id_cultivo  = pgc.id_cultivo
+where pl.promedio_lote > pgc.promedio_cultivo
+
 
 -- 8. Calcular el incremento en facturación por cada mes entre el 2022 y el 2023.
 -- Para calcular el incremento en facturación por cada mes entre los años 2022 y 2023 
