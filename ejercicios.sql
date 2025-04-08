@@ -241,42 +241,46 @@ from facturacion_2022 f22
 
 
 
--- 9. Calcular el incremento en cantidad de despachos por cada mes entre el 2022 y el 2023.
+-- 9. Calcular el incremento en cantidad despachada por cada mes entre el 2022 y el 2023.
 -- Para calcular el incremento en cantidad de despachos por cada mes entre los años 2022 y 2023 
 -- utilizando Common Table Expressions (CTEs), primero debes estructurar dos CTEs separadas, 
--- una para cada año. Cada CTE deberá agrupar la cantidad de despachos por mes y año.
+-- una para cada año. Cada CTE deberá agrupar la cantidad recogida en cada despacho por mes y año.
 -- Luego, una vez que tienes estas dos tablas temporales de resultados para 2022 y 
 -- 2023, debes hacer un join usando el mes como llave. Esto te permitirá tener los totales de 
 -- cantidad de despacho lado a lado para cada mes de ambos años en una única consulta. 
 -- El siguiente paso es calcular la diferencia entre los dos totales para cada mes, 
 -- lo que te dará el incremento o decremento en la facturación mes a mes.
 
-create view despachos_por_mes as
-select
-extract (year from d.fecha) as año,
-extract (month from d.fecha) as mes,
-count(d.id) as cantidad_despachos
+with total_recogido_2022 as (
+select 
+extract(year from d.fecha) as año, 
+extract(month from d.fecha) as mes,
+sum(r.cantidad) as total
 from despacho d
+	join recogida r
+		on r.id_despacho = d.id
+where extract(year from d.fecha) = 2022
 group by extract(year from d.fecha), extract(month from d.fecha)
-order by año, mes
-
-
-with despachos_22 as (
-	select * from despachos_por_mes
-	where año = 2022
 ),
-despachos_23 as (
-	select * from despachos_por_mes
-	where año = 2023
+total_recogido_2023 as (
+select 
+extract(year from d.fecha) as año, 
+extract(month from d.fecha) as mes,
+sum(r.cantidad) as total
+from despacho d
+	join recogida r
+		on r.id_despacho = d.id
+where extract(year from d.fecha) = 2023
+group by extract(year from d.fecha), extract(month from d.fecha)
 )
 select 
-d22.mes,
-d22.cantidad_despachos as despachos_22,
-coalesce(d23.cantidad_despachos,0) as despachos_23,
-coalesce(d23.cantidad_despachos,0) - d22.cantidad_despachos as diferencia
-from despachos_22 as d22
-	left join despachos_23 as d23
-		on d22.mes = d23.mes
+t22.mes,
+t22.total as total_2022,
+coalesce(t23.total, 0) as total_2023,
+(coalesce(t23.total, 0) - t22.total) * 100 / t22.total as cambio_porcentual
+from total_recogido_2022 as t22
+	left join total_recogido_2023 as t23	
+		on t22.mes = t23.mes
 	
 		
 -- 10. Calcular el aumento porcentual anual en el total de recogidas por cultivo entre dos años consecutivos, 
