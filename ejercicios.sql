@@ -207,42 +207,36 @@ select * from promedio_por_lote pl
 where pl.promedio_lote > pgc.promedio_cultivo
 
 
--- 8. Calcular el incremento en facturación por cada mes entre el 2022 y el 2023.
--- Para calcular el incremento en facturación por cada mes entre los años 2022 y 2023 
--- utilizando Common Table Expressions (CTEs), primero debes estructurar dos CTEs separadas, 
--- una para cada año. Cada CTE deberá agrupar las facturas por mes y sumar el total de facturación
--- de cada mes. Luego, una vez que tienes estas dos tablas temporales de resultados para 2022 y 
--- 2023, debes hacer un join usando el mes como llave. Esto te permitirá tener los totales de 
--- facturación lado a lado para cada mes de ambos años en una única consulta. 
--- El siguiente paso es calcular la diferencia entre los dos totales para cada mes, 
--- lo que te dará el incremento o decremento en la facturación mes a mes.
-
--- crear vista de facturacion_mensual
-create view facturacion_mensual as
-select
-extract(year from f.fecha) as año,
-extract (month from f.fecha) as mes,
-sum(f.total)
-from factura f
-group by extract(year from f.fecha), extract(month from f.fecha)
-
-select * from facturacion_mensual
-
-with facturacion_22 as (
-	select * from facturacion_mensual
-	where año = 2022
-),
-facturacion_23 as (
-	select * from facturacion_mensual
-	where año = 2023
-)
+-- 8. Calcular el incremento o decremento mensual en facturación entre los años 2022 y 2023.
+-- calcular la facturacion por mes en un año especifico
+-- hacer un query para el 2022 y otro para el 2023
+-- hacer un join entre ambos queries
+-- calcular el incremento mensual
+with facturacion_2022 as (
 select 
+extract(year from f.fecha) as año, 
+extract(month from f.fecha) as mes,
+sum(f.total) as total
+from factura f
+where extract(year from f.fecha) = 2022
+group by extract(year from f.fecha), extract(month from f.fecha)
+),
+facturacion_2023 as (
+select 
+extract(year from f.fecha) as año, 
+extract(month from f.fecha) as mes,
+sum(f.total) as total
+from factura f
+where extract(year from f.fecha) = 2023
+group by extract(year from f.fecha), extract(month from f.fecha)
+)
+select
 f22.mes,
-f22.sum,
-coalesce(f23.sum,0),
-f22.sum - coalesce(f23.sum,0) as diferencia
-from facturacion_22 as f22
-	left join facturacion_23 as f23
+f22.total as total_2022,
+coalesce(f23.total, 0) as total_2023,
+(coalesce(f23.total, 0) - f22.total) * 100 / f22.total as cambio_porcentual
+from facturacion_2022 f22
+	left join facturacion_2023 f23
 		on f22.mes = f23.mes
 
 
